@@ -1,5 +1,8 @@
+# building container
 FROM node:22-alpine
-LABEL name="project my-microservice builder"
+
+ENV PACKAGE_NAME=example
+ENV SERVICE_NAME=my-microservice
 
 WORKDIR /opt/build
 
@@ -7,42 +10,39 @@ RUN apk add --update \
 && apk add --no-cache ca-certificates \
 && apk add --no-cache --virtual .build-deps curl git python3 alpine-sdk
 
-# 全プロジェクトファイルをコピー
 COPY . .
 
-# 依存関係をインストール
 RUN yarn install
 
-# プロジェクトをビルド
 RUN yarn workspaces foreach --all run build
 
-# シンプルにNode.jsのモジュール解決を使用するために、package.jsonのパスベースのimportを準備
 WORKDIR /opt/app
-RUN mkdir -p packages/example
-RUN mkdir -p services/my-microservice
+RUN mkdir -p packages/${PACKAGE_NAME}
+RUN mkdir -p services/${SERVICE_NAME}
 
-# バンドルしたpackage.jsonを作成
-RUN echo '{"name":"project-bundle","type":"module","dependencies":{"@project/example":"file:packages/example"}}' > package.json
+RUN cat <<EOF > package.json
+{
+    "name": "project-bundle",
+    "type": "module",
+    "dependencies": {
+        "@project/${PACKAGE_NAME}": "file:packages/${PACKAGE_NAME}"
+    }
+}
+EOF
 
-# exampleパッケージをコピー
-RUN cp -r /opt/build/packages/example/dist ./packages/example/dist
-RUN cp /opt/build/packages/example/package.json ./packages/example/
+RUN cp -r /opt/build/packages/${PACKAGE_NAME}/dist ./packages/${PACKAGE_NAME}/dist
+RUN cp /opt/build/packages/${PACKAGE_NAME}/package.json ./packages/${PACKAGE_NAME}/
 
-# my-microserviceサービス設定とコード
-RUN cp -r /opt/build/services/my-microservice/dist ./services/my-microservice/dist
-RUN cp /opt/build/services/my-microservice/package.json ./services/my-microservice/
+RUN cp -r /opt/build/services/${SERVICE_NAME}/dist ./services/${SERVICE_NAME}/dist
+RUN cp /opt/build/services/${SERVICE_NAME}/package.json ./services/${SERVICE_NAME}/
 
-# 依存関係をインストール（file:パスの参照を解決）
 RUN npm install
 
+# running container
 FROM node:22-alpine
-LABEL name="project my-microservice"
-LABEL version="0.1.0"
 
 WORKDIR /usr/app
 
-# アプリケーションをコピー
 COPY --from=0 /opt/app ./
 
-# アプリケーションを実行
-CMD ["node", "--enable-source-maps", "services/my-microservice/dist/index.js"]
+CMD ["node", "--enable-source-maps", "services/${SERVICE_NAME}/dist/index.js"]

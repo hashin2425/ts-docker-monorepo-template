@@ -1,0 +1,31 @@
+{
+	"$schema": "http://json.schemastore.org/package",
+	"name": "@project/example",
+	"description": "Some cool package",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"lint": "eslint src",
+		"build": "tsc",
+		"test": "vitest run"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/didinele/typescript-docker-monorepo.git"
+	},
+	"author": "didinele",
+	"bugs": {
+		"url": "https://github.com/didinele/typescript-docker-monorepo/issues"
+	},
+	"homepage": "https://github.com/didinele/typescript-docker-monorepo#readme",
+	"devDependencies": {
+		"@types/node": "^22.9.1",
+		"typescript": "^5.6.3",
+		"vitest": "^2.1.5"
+	},
+	"dependencies": {
+		"tslib": "^2.8.1"
+	}
+}
